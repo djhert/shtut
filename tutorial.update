@@ -1,0 +1,25 @@
+#!/bin/bash
+
+SHPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+hurl="curl -A "shtut" -f#LO"
+START=$PWD
+HOST="https://shtut.themaster.site/tut"
+
+cd $SHPATH
+printf "\nEntering installation directory at $SHPATH\n"
+printf "Downloading base script...\n"
+$hurl "$HOST/tutorial.sh"
+chmod +x tutorial.sh
+
+source <(curl -s -A "shtut" "$HOST/includes")
+mkdir -p $SHPATH/core
+cd $SHPATH/core
+for i in ${includes[@]}; do
+	file="$HOST/core/$i"
+	printf "\nDownloading $file...\n"
+	$hurl $file
+	chmod +x $i
+done
+
+printf "\nUpdate complete!\n"
+cd $START
