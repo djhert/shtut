@@ -1,0 +1,67 @@
+#!/bin/sh
+
+BACKTITLE="Shell Tutor v1"
+DIALOG="/usr/bin/dialog"
+OUTPUT="$HOME/tmp/dgin"
+
+>$OUTPUT
+
+trap "rm -f $OUTPUT" 0 1 2 5 15
+
+dgTest() {
+	type dialog > /dev/null
+	if [ $? != "0" ]; then
+		printf "Please install dialog! \nAs root:\n    yum install dialog\n\nRe-run $0 once installed.\n"
+		exit 1
+	fi
+}
+
+dgInfo() {
+	if [ $# -lt 4 ]; then
+		echo "dgInfo requires 3 conditions, $# passed"
+		exit 1
+	fi
+	dialog --backtitle "$BACKTITLE" --title "$1" --infobox "$2" $3 $4
+}
+
+dgMessage() {
+	if [ $# -lt 4 ]; then
+		echo "dgMessage requires 3 conditions, $# passed"
+		exit 1
+	fi
+	dialog --backtitle "$BACKTITLE" --title "$1" --msgbox "$2" $3 $4
+}
+
+dgYesNo() {
+	if [ $# -lt 4 ]; then
+		echo "dgYesNo requires 3 conditions, $# passed"
+		exit 1
+	fi
+	dialog --backtitle "$BACKTITLE" --title "$1" --yesno "$2" $3 $4
+	local r=$?
+	if [ "$r" == "255" ]; then
+		r="1"
+	fi
+	return $r
+}
+
+dgProgress() {
+	if [ $# -lt 5 ]; then
+		echo "dgProgress requires 5 conditions, $# passed"
+		exit 1
+	fi
+	dialog --backtitle "$BACKTITLE" --title "$1" --guage "$2" $3 $4 $5
+}
+
+dgInput() {
+	if [ $# -lt 4 ]; then
+		echo "dgInput requires 4 conditions, $# passed"
+		exit 1
+	fi
+	dialog --backtitle "$BACKTITLE" --title "$1" --inputbox "$2" $3 $4 2>$OUTPUT
+	r=$?
+	if [ "$r" == "255" ]; then
+		r="1"
+	fi
+	RESULT=("$r" "$(<$OUTPUT)")
+}

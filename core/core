@@ -1,0 +1,111 @@
+#!/bin/sh
+
+PWD=$(pwd)
+SHDIR="$HOME/.shtut"
+CONFIG="$SHDIR/config"
+PS4="`whoami`@themaster.site [$PWD]$ "
+
+RESULT=( "a" "b" )
+
+yn() {
+	while true; do
+		printf "$1 [y/n] "
+		read a
+		if [ "$a" == "y" ]; then
+			return 0
+		elif [ "$a" == "n" ]; then
+			return 1
+		else
+			echo "$a is not valid"
+		fi
+	done
+}
+
+
+function Create {
+	mkdir -p $SHDIR
+	m=$(printf "\nWelcome to Shell Tutor!\nThis is a series of tutorials designed to assist you in becoming more acquianted with the Shell\n\nTo get started, what is your name?\n")
+	dgInput "Setup" "$m" 15 60
+	if [ "${RESULT[0]}" != "0" ]; then
+		dgMessage "Setup canceled" "\n\n    The setup has been canceled." 10 40
+		exit 1
+	fi
+	name=${RESULT[1]}
+	dgInput "Setup" "\nWhat is the domain name?" 10 50
+	if [ "${RESULT[0]}" != "0" ]; then
+		dgMessage "Setup canceled" "\n\n    The setup has been canceled." 10 40
+		exit 1
+	fi
+	domain=${RESULT[1]}
+	docroot=$(grep "documentroot:" /var/cpanel/userdata/`whoami`/$domain | sed 's/^[^ ]* //')
+	if [ -z $docroot ]; then
+		dgInput "docroot - error" "\nUnable to find docroot for: $domain\nPlease enter docroot below:\n" 10 50
+		if [ "${RESULT[0]}" != "0" ]; then
+			dgMessage "Setup canceled" "\n\n    The setup has been canceled." 10 40
+			exit 1
+		fi
+		docroot=${RESULT[1]}
+	fi
+	dgYesNo "Correct" "\nIs this correct?\nName: $name\nDomain: $domain\nDocroot:$docroot\n" 10 50
+	if [ $? != 0 ]; then
+		dgMessage "Setup canceled" "\n\n    The setup has been canceled." 10 40
+		exit 1
+	fi
+	#printf "Supervisor's Email: "
+	echo "NAME=$name" > $CONFIG
+	#echo "SUPEMAIL=$sem" >> $CONFIG
+	echo "DOMAIN=$domain" >> $CONFIG
+	echo "DOCROOT=$docroot" >> $CONFIG
+	source $CONFIG
+	setupWordPress
+#	printf "=========================\n"
+#	printf "     Setup Complete!\n\n"
+#	printf "Congratulations $name! Re-run $0 to begin!\n"
+#	exit 0
+}
+
+function Clean {
+	printf "\nClean\n"
+	printf "=========================\n\n"
+	yn "Remove ALL $0 data? \nThis is unrecoverable!"
+	if [ $? -eq 0 ]; then
+		rm -rf $SHDIR
+		printf "Goodbye $NAME!\n"
+		exit 0
+	else
+		echo "Nothing deleted. Exiting..."
+		exit 0
+	fi
+
+}
+
+function Menu {
+	dgInput "Test" "This is a test" 20 60
+	echo ${RESULT[@]}
+	exit 0
+}
+
+function Main {
+	if [ -f $CONFIG ]; then
+		source $CONFIG
+		setupWordPress
+	else
+		Create
+	fi
+
+	if [ "$1" == "update"  ]; then
+		printf "$1\n"
+		exit 0
+	elif [ "$1" == "clean" ]; then
+		Clean
+		exit 0
+	elif [ "$1" == "lesson" ] || [ "$1" == "-l" ]; then
+		printf "lesson\n"
+		exit 0
+	elif [ "$1" == "" ]; then
+		Menu
+	else
+		printf "unknown: $1\n"
+		exit 1
+	fi
+}

@@ -1,0 +1,58 @@
+#!/bin/sh
+
+setupWordPress() {
+	dgInfo "Checking WordPress" "\nGathering Info...\n" 5 30
+	V=$(curl -s -A "" http://version.themaster.site | grep "Version:" | sed 's/^[^ ]* //')
+	V=${V%<*}
+	curV=$(wp core version --path=$DOCROOT)
+	if [ $?  != 0 ]; then
+		dgYesNo "Error WordPress" "\nIt doesn't look like WordPress is installed, install now?\n" 10 50
+		if [ $? -eq 0 ]; then
+			dgInfo "Installing WordPress" "\nInstalling WordPress v$V at $DOCROOT\n" 10 30
+			wp core download --force --quiet --path=$DOCROOT
+			dgInput "Database Info" "\nDatabse Name: \n" 10 40
+			if [ "${RESULT[0]}" != "0" ]; then
+				dgMessage "Setup canceled" "\n\n    $0 cannot continue.\n    A WordPress installation is required.\n" 15 40
+				exit 1
+			fi
+			dbname=${RESULT[1]}
+			dgInput "Database Info" "\nDatabse User: \n" 10 40
+			if [ "${RESULT[0]}" != "0" ]; then
+				dgMessage "Setup canceled" "\n\n    $0 cannot continue.\n    A WordPress installation is required.\n" 15 40
+				exit 1
+			fi
+			dbuser=${RESULT[1]}
+			dgInput "Database Info" "\nDatabse Password: \n" 10 40
+			if [ "${RESULT[0]}" != "0" ]; then
+				dgMessage "Setup canceled" "\n\n    $0 cannot continue.\n    A WordPress installation is required.\n" 15 40
+				exit 1
+			fi
+			dbpass=${RESULT[1]}
+			wp core config --path=$DOCROOT --dbname=$dbname --dbuser=$dbuser --dbpass="$dbpass"
+		dgYesNo "Complete" "\nInstalltion of WordPress v$V is completed on $DOMAIN\n\nPlease now go to http://$DOMAIN to complete the setup\n\nHave you completed this?\n" 10 50
+		if [ $? -eq 0 ]; then
+			setupWordPress
+		else
+			echo "Please re-run $0 when ready"
+			exit 1
+		fi
+		else
+			dgMessage "Setup canceled" "\n\n    $0 cannot continue.\n    A WordPress installation is required.\n" 15 40
+			exit 1
+		fi
+
+		exit 0
+	fi
+	if [ $V != $curV ]; then
+		dgYesNo "Update Available" "\mYour WordPress verions is out of date on $DOMAIN\nCurrent: $V\n$DOMAIN: $curV\n\nUpdate now?"
+		if [ $? -eq 0 ]; then
+			dgInfo "Updating..." "\nUpdating $DOMAIN to $V\n" 10 30
+			wp core update --quiet --path=$DOCROOT
+		else
+			dgMessage "Warning" "\nThis is not recommended, but continuing as normal.\nPlease WordPress update when possible.\n" 10 50
+		fi
+	else
+		dgInfo "WorkdPress" "\nYour WordPress is up to date!" 5 40
+		sleep 1
+	fi
+}
