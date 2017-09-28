@@ -52,7 +52,7 @@ setupWordPress() {
 			dgMessage "Warning" "\nThis is not recommended, but continuing as normal.\nPlease WordPress update when possible.\n" 10 50
 		fi
 	else
-		dgInfo "WorkdPress" "\nYour WordPress is up to date!" 5 40
+		dgInfo "WordPress" "\nYour WordPress is up to date!" 5 40
 		sleep 1
 	fi
 }
